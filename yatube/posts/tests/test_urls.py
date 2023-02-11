@@ -41,31 +41,31 @@ class PostURLTests(TestCase):
         """Тест статусов для всех видов пользователей.
         Пользователи: гость, авторизованный без постов и автор поста."""
         urls_list = [
-            ('', self.guest_client, HTTPStatus.OK),
-            ('', self.authorized_client, HTTPStatus.OK),
-            ('', self.authorized_author, HTTPStatus.OK),
+            ('/', self.guest_client, HTTPStatus.OK),
+            ('/', self.authorized_client, HTTPStatus.OK),
+            ('/', self.authorized_author, HTTPStatus.OK),
 
-            ('group/test_group/', self.guest_client, HTTPStatus.OK),
-            ('group/test_group/', self.authorized_client, HTTPStatus.OK),
-            ('group/test_group/', self.authorized_author, HTTPStatus.OK),
+            (f'/group/{self.group.slug}/', self.guest_client, HTTPStatus.OK),
+            (f'/group/{self.group.slug}/', self.authorized_client, HTTPStatus.OK),
+            (f'/group/{self.group.slug}/', self.authorized_author, HTTPStatus.OK),
 
-            ('profile/test_user', self.guest_client, HTTPStatus.OK),
-            ('profile/test_user', self.authorized_client, HTTPStatus.OK),
-            ('profile/test_user', self.authorized_author, HTTPStatus.OK),
+            (f'/profile/{self.authorized_user_author.username}/', self.guest_client, HTTPStatus.OK),
+            (f'/profile/{self.authorized_user_author.username}/', self.authorized_client, HTTPStatus.OK),
+            (f'/profile/{self.authorized_user_author.username}/', self.authorized_author, HTTPStatus.OK),
 
-            (f'posts/{self.post.pk}/', self.guest_client, HTTPStatus.OK),
-            (f'posts/{self.post.pk}/', self.authorized_client, HTTPStatus.OK),
-            (f'posts/{self.post.pk}/', self.authorized_author, HTTPStatus.OK),
+            (f'/posts/{self.post.pk}/', self.guest_client, HTTPStatus.OK),
+            (f'/posts/{self.post.pk}/', self.authorized_client, HTTPStatus.OK),
+            (f'/posts/{self.post.pk}/', self.authorized_author, HTTPStatus.OK),
 
-            ('create/', self.guest_client, HTTPStatus.FOUND),
-            ('create/', self.authorized_client, HTTPStatus.OK),
-            ('create/', self.authorized_author, HTTPStatus.OK),
+            ('/create/', self.guest_client, HTTPStatus.FOUND),
+            ('/create/', self.authorized_client, HTTPStatus.OK),
+            ('/create/', self.authorized_author, HTTPStatus.OK),
 
-            (f'posts/{self.post.pk}/edit/',
+            (f'/posts/{self.post.pk}/edit/',
              self.guest_client, HTTPStatus.FOUND),
-            (f'posts/{self.post.pk}/edit/',
+            (f'/posts/{self.post.pk}/edit/',
              self.authorized_client, HTTPStatus.FOUND),
-            (f'posts/{self.post.pk}/edit/',
+            (f'/posts/{self.post.pk}/edit/',
              self.authorized_author, HTTPStatus.OK),
 
             ('/unexisting_page/',
