@@ -1,9 +1,10 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
-from django.test import TestCase, Client
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from ..models import Group, Post
-
 
 User = get_user_model()
 
@@ -19,6 +20,11 @@ class PostFormsTest(TestCase):
             title='Тестовое название группы',
             description='Тестовое описание группы',
             slug='test-slug',
+        )
+        cls.another_group = Group.objects.create(
+            title='Тестовое название другой группы',
+            description='Тестовое описание другой группы',
+            slug='another-test-slug',
         )
         cls.post = Post.objects.create(
             text='Тестовый пост',
@@ -40,27 +46,26 @@ class PostFormsTest(TestCase):
         response = self.authorized_client.post(
             reverse('posts:post_create'),
             data=form_data,
-            follow=True,
         )
         new_post = Post.objects.first()
         self.assertRedirects(response, reverse(
             'posts:profile', kwargs={'username': self.user.username})
         )
         self.assertEqual(Post.objects.count(), posts_count + 1)
-        self.assertEqual(new_post.group, self.group)
+        self.assertEqual(new_post.group.pk, form_data['group'])
         self.assertEqual(new_post.author, self.user)
         self.assertEqual(new_post.text, form_data['text'])
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     def test_edit_post(self):
         """Валидная форма редактирует запись в Post."""
         form_data = {
             'text': 'Текст нового тестового поста, редактируем...',
-            'group': self.group.pk,
+            'group': self.another_group.pk,
         }
         response = self.authorized_client.post(
             reverse('posts:post_edit', kwargs={'post_id': self.post.pk}),
             data=form_data,
-            follow=True,
         )
         post = Post.objects.get(pk=self.post.pk)
         self.assertRedirects(response, reverse(
@@ -68,3 +73,5 @@ class PostFormsTest(TestCase):
         )
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.group.pk, form_data['group'])
+        self.assertEqual(post.author, self.user) 
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)

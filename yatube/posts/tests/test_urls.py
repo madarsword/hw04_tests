@@ -1,11 +1,10 @@
-from django.test import TestCase, Client
-from django.contrib.auth import get_user_model
-from django.urls import reverse
-
 from http import HTTPStatus
 
-from ..models import Post, Group
+from django.contrib.auth import get_user_model
+from django.test import Client, TestCase
+from django.urls import reverse
 
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -15,8 +14,11 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(
-            username="test_user"
+        cls.authorized_user = User.objects.create_user(
+            username="test_authorized_user"
+        )
+        cls.authorized_user_author = User.objects.create_user(
+            username="test_authorized_author"
         )
         cls.group = Group.objects.create(
             title='Тестовая группа',
@@ -24,7 +26,7 @@ class PostURLTests(TestCase):
             description='Тестовое описание тестовой группы'
         )
         cls.post = Post.objects.create(
-            author=cls.user,
+            author=cls.authorized_user_author,
             text='Тестовый тест тестового поста без группы'
         )
 
@@ -32,46 +34,43 @@ class PostURLTests(TestCase):
         """Создание клиентов гостя и зарегистрированного пользователя."""
         self.guest_client = Client()
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(self.authorized_user)
+        self.authorized_author = Client()
+        self.authorized_author.force_login(self.authorized_user_author)
 
-    def test_urls_response_for_guest(self):
-        """Проверка статуса страниц для гостевого аккаунта."""
-        url_status = {
-            reverse('posts:index'): HTTPStatus.OK,
-            reverse('posts:group_list', kwargs={
-                'slug': PostURLTests.group.slug}): HTTPStatus.OK,
-            reverse('posts:profile', kwargs={
-                'username': PostURLTests.user.username}): HTTPStatus.OK,
-            reverse('posts:post_detail', kwargs={
-                'post_id': PostURLTests.post.pk}): HTTPStatus.OK,
-            reverse('posts:post_edit', kwargs={
-                'post_id': PostURLTests.post.pk}): HTTPStatus.FOUND,
-            reverse('posts:post_create'): HTTPStatus.FOUND,
-            '/unexisting_page/': HTTPStatus.NOT_FOUND,
-        }
-        for url, status_code in url_status.items():
-            with self.subTest(url=url):
-                response = self.guest_client.get(url)
-                self.assertEqual(response.status_code, status_code)
+    def test_all_urls(self):
+        """Тест статусов для всех видов пользователей.
+        Пользователи: гость, авторизованный без постов и автор поста."""
+        urls_list = [
+            ('', self.guest_client, HTTPStatus.OK),
+            ('', self.authorized_client, HTTPStatus.OK),
+            ('', self.authorized_author, HTTPStatus.OK),
 
-    def test_urls_response_for_authenticated_user(self):
-        """Проверка статуса страниц для авторизованного пользователя."""
-        url_status = {
-            reverse('posts:index'): HTTPStatus.OK,
-            reverse('posts:group_list', kwargs={
-                'slug': PostURLTests.group.slug}): HTTPStatus.OK,
-            reverse('posts:profile', kwargs={
-                'username': PostURLTests.user.username}): HTTPStatus.OK,
-            reverse('posts:post_detail', kwargs={
-                'post_id': PostURLTests.post.pk}): HTTPStatus.OK,
-            reverse('posts:post_edit', kwargs={
-                'post_id': '1'}): HTTPStatus.FOUND,
-            reverse('posts:post_edit', kwargs={
-                'post_id': PostURLTests.post.pk}): HTTPStatus.OK,
-            reverse('posts:post_create'): HTTPStatus.OK,
-            '/unexisting_page/': HTTPStatus.NOT_FOUND,
-        }
-        for url, status_code in url_status.items():
+            ('group/test_group/', self.guest_client, HTTPStatus.OK),
+            ('group/test_group/', self.authorized_client, HTTPStatus.OK),
+            ('group/test_group/', self.authorized_author, HTTPStatus.OK),
+            
+            ('profile/test_user', self.guest_client, HTTPStatus.OK),
+            ('profile/test_user', self.authorized_client, HTTPStatus.OK),
+            ('profile/test_user', self.authorized_author, HTTPStatus.OK),
+
+            (f'posts/{self.post.pk}/', self.guest_client, HTTPStatus.OK),
+            (f'posts/{self.post.pk}/', self.authorized_client, HTTPStatus.OK),
+            (f'posts/{self.post.pk}/', self.authorized_author, HTTPStatus.OK),
+
+            ('create/', self.guest_client, HTTPStatus.FOUND),
+            ('create/', self.authorized_client, HTTPStatus.OK),
+            ('create/', self.authorized_author, HTTPStatus.OK),
+
+            (f'posts/{self.post.pk}/edit/', self.guest_client, HTTPStatus.FOUND),
+            (f'posts/{self.post.pk}/edit/', self.authorized_client, HTTPStatus.FOUND),
+            (f'posts/{self.post.pk}/edit/', self.authorized_author, HTTPStatus.OK),
+
+            ('/unexisting_page/', self.guest_client, HTTPStatus.NOT_FOUND),
+            ('/unexisting_page/', self.authorized_client, HTTPStatus.NOT_FOUND),
+            ('/unexisting_page/', self.authorized_author, HTTPStatus.NOT_FOUND),
+        ]
+        for url, client, status_code in urls_list:
             with self.subTest(url=url):
-                response = self.authorized_client.get(url)
+                response = client.get(url)
                 self.assertEqual(response.status_code, status_code)

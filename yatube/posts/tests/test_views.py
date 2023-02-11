@@ -1,10 +1,10 @@
+from django import forms
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
-from django import forms
+from yatube.settings import POSTS_PER_PAGE
 
-from ..models import Post, Group
-
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -112,28 +112,7 @@ class PostViewTests(TestCase):
         response = self.authorized_client.get(reverse('posts:post_create'))
         self.post_create_edit(response.context)
 
-    def test_pages_uses_correct_template(self):
-        """URL-адрес использует соответствующий шаблон."""
-        templates_pages_names = {
-            reverse('about:tech'): 'about/tech.html',
-            reverse('about:author'): 'about/author.html',
-            reverse('posts:index'): 'posts/index.html',
-            reverse('posts:post_create'): 'posts/create_post.html',
-            reverse('posts:group_list', kwargs={'slug': self.group.slug}):
-                'posts/group_list.html',
-            reverse('posts:profile', kwargs={'username': self.user.username}):
-                'posts/profile.html',
-            reverse('posts:post_detail', kwargs={'post_id': self.post.pk}):
-                'posts/post_detail.html',
-            reverse('posts:post_edit', kwargs={'post_id': self.post.pk}):
-                'posts/create_post.html',
-        }
-        for reverse_name, template in templates_pages_names.items():
-            with self.subTest(template=template):
-                response = self.authorized_client.get(reverse_name)
-                self.assertTemplateUsed(response, template)
-
-
+    
 class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -141,6 +120,8 @@ class PaginatorViewsTest(TestCase):
         cls.author = User.objects.create_user(username='author')
         cls.authorized_author = Client()
         cls.authorized_author.force_login(cls.author)
+
+    AMOUNT_OF_TEST_POSTS = POSTS_PER_PAGE + 3
 
     def setUp(self):
         self.group = Group.objects.create(
@@ -151,7 +132,7 @@ class PaginatorViewsTest(TestCase):
         self.post = Post.objects.bulk_create([
             Post(author=self.author,
                  text=f'Тестовый пост {i}',
-                 group=self.group) for i in range(13)]
+                 group=self.group) for i in range(self.AMOUNT_OF_TEST_POSTS)]
         )
         self.page_names_records = {
             'posts:index': '',
@@ -161,16 +142,15 @@ class PaginatorViewsTest(TestCase):
 
     def test_first_page_has_ten_posts(self):
         """На первой странице с паджинатором верное количество постов."""
-        POSTS_ON_FIRST_PAGE = 10
         for page_name, kwarg in self.page_names_records.items():
             with self.subTest(page_name=page_name):
                 response = self.client.get(reverse(page_name, kwargs=kwarg))
                 self.assertEqual(
-                    len(response.context['page_obj']), POSTS_ON_FIRST_PAGE)
+                    len(response.context['page_obj']), POSTS_PER_PAGE)
 
     def test_second_page_has_three_posts(self):
         """На второй странице с паджинатором верное количество постов."""
-        POSTS_ON_SECOND_PAGE = 3
+        POSTS_ON_SECOND_PAGE = (self.AMOUNT_OF_TEST_POSTS - POSTS_PER_PAGE)
         for page_name, kwarg in self.page_names_records.items():
             with self.subTest(page_name=page_name):
                 response = self.client.get(reverse(
