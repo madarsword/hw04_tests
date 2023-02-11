@@ -62,7 +62,7 @@ class PostURLTests(TestCase):
             ('create/', self.authorized_author, HTTPStatus.OK),
 
             (f'posts/{self.post.pk}/edit/',
-                self.guest_client, HTTPStatus.FOUND),
+                self.guest_client, HTTPStatus.NOT_FOUND),
             (f'posts/{self.post.pk}/edit/',
                 self.authorized_client, HTTPStatus.FOUND),
             (f'posts/{self.post.pk}/edit/',
