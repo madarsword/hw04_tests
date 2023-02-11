@@ -73,5 +73,5 @@ class PostFormsTest(TestCase):
         )
         self.assertEqual(post.text, form_data['text'])
         self.assertEqual(post.group.pk, form_data['group'])
-        self.assertEqual(post.author, self.user) 
+        self.assertEqual(post.author, self.user)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)

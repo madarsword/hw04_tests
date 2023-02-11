@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
+
 from yatube.settings import POSTS_PER_PAGE
 
 from ..models import Group, Post
@@ -112,7 +113,7 @@ class PostViewTests(TestCase):
         response = self.authorized_client.get(reverse('posts:post_create'))
         self.post_create_edit(response.context)
 
-    
+
 class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):

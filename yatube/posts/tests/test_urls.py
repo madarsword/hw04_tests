@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -49,7 +48,7 @@ class PostURLTests(TestCase):
             ('group/test_group/', self.guest_client, HTTPStatus.OK),
             ('group/test_group/', self.authorized_client, HTTPStatus.OK),
             ('group/test_group/', self.authorized_author, HTTPStatus.OK),
-            
+
             ('profile/test_user', self.guest_client, HTTPStatus.OK),
             ('profile/test_user', self.authorized_client, HTTPStatus.OK),
             ('profile/test_user', self.authorized_author, HTTPStatus.OK),
@@ -62,13 +61,19 @@ class PostURLTests(TestCase):
             ('create/', self.authorized_client, HTTPStatus.OK),
             ('create/', self.authorized_author, HTTPStatus.OK),
 
-            (f'posts/{self.post.pk}/edit/', self.guest_client, HTTPStatus.FOUND),
-            (f'posts/{self.post.pk}/edit/', self.authorized_client, HTTPStatus.FOUND),
-            (f'posts/{self.post.pk}/edit/', self.authorized_author, HTTPStatus.OK),
+            (f'posts/{self.post.pk}/edit/',
+                self.guest_client, HTTPStatus.FOUND),
+            (f'posts/{self.post.pk}/edit/',
+                self.authorized_client, HTTPStatus.FOUND),
+            (f'posts/{self.post.pk}/edit/',
+                self.authorized_author, HTTPStatus.OK),
 
-            ('/unexisting_page/', self.guest_client, HTTPStatus.NOT_FOUND),
-            ('/unexisting_page/', self.authorized_client, HTTPStatus.NOT_FOUND),
-            ('/unexisting_page/', self.authorized_author, HTTPStatus.NOT_FOUND),
+            ('/unexisting_page/',
+                self.guest_client, HTTPStatus.NOT_FOUND),
+            ('/unexisting_page/',
+                self.authorized_client, HTTPStatus.NOT_FOUND),
+            ('/unexisting_page/',
+                self.authorized_author, HTTPStatus.NOT_FOUND),
         ]
         for url, client, status_code in urls_list:
             with self.subTest(url=url):
