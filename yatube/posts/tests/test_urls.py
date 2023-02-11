@@ -62,18 +62,18 @@ class PostURLTests(TestCase):
             ('create/', self.authorized_author, HTTPStatus.OK),
 
             (f'posts/{self.post.pk}/edit/',
-                self.guest_client, HTTPStatus.NOT_FOUND),
+             self.guest_client, HTTPStatus.FOUND),
             (f'posts/{self.post.pk}/edit/',
-                self.authorized_client, HTTPStatus.FOUND),
+             self.authorized_client, HTTPStatus.FOUND),
             (f'posts/{self.post.pk}/edit/',
-                self.authorized_author, HTTPStatus.OK),
+             self.authorized_author, HTTPStatus.OK),
 
             ('/unexisting_page/',
-                self.guest_client, HTTPStatus.NOT_FOUND),
+             self.guest_client, HTTPStatus.NOT_FOUND),
             ('/unexisting_page/',
-                self.authorized_client, HTTPStatus.NOT_FOUND),
+             self.authorized_client, HTTPStatus.NOT_FOUND),
             ('/unexisting_page/',
-                self.authorized_author, HTTPStatus.NOT_FOUND),
+             self.authorized_author, HTTPStatus.NOT_FOUND),
         ]
         for url, client, status_code in urls_list:
             with self.subTest(url=url):
