@@ -13,11 +13,11 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.authorized_user = User.objects.create_user(
-            username="test_authorized_user"
+        cls.user = User.objects.create_user(
+            username="test_user"
         )
-        cls.authorized_user_author = User.objects.create_user(
-            username="test_authorized_author"
+        cls.author = User.objects.create_user(
+            username="test_author"
         )
         cls.group = Group.objects.create(
             title='Тестовая группа',
@@ -25,7 +25,7 @@ class PostURLTests(TestCase):
             description='Тестовое описание тестовой группы'
         )
         cls.post = Post.objects.create(
-            author=cls.authorized_user_author,
+            author=cls.author,
             text='Тестовый тест тестового поста без группы'
         )
 
@@ -33,42 +33,27 @@ class PostURLTests(TestCase):
         """Создание клиентов гостя и зарегистрированного пользователя."""
         self.guest_client = Client()
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.authorized_user)
+        self.authorized_client.force_login(self.user)
         self.authorized_author = Client()
-        self.authorized_author.force_login(self.authorized_user_author)
+        self.authorized_author.force_login(self.author)
 
     def test_all_urls(self):
         """Тест статусов для всех видов пользователей.
         Пользователи: гость, авторизованный без постов и автор поста."""
         urls_list = [
             ('/', self.guest_client, HTTPStatus.OK),
-            ('/', self.authorized_client, HTTPStatus.OK),
-            ('/', self.authorized_author, HTTPStatus.OK),
 
             (f'/group/{self.group.slug}/',
              self.guest_client, HTTPStatus.OK),
-            (f'/group/{self.group.slug}/',
-             self.authorized_client, HTTPStatus.OK),
-            (f'/group/{self.group.slug}/',
-             self.authorized_author, HTTPStatus.OK),
 
-            (f'/profile/{self.authorized_user_author.username}/',
+            (f'/profile/{self.author.username}/',
              self.guest_client, HTTPStatus.OK),
-            (f'/profile/{self.authorized_user_author.username}/',
-             self.authorized_client, HTTPStatus.OK),
-            (f'/profile/{self.authorized_user_author.username}/',
-             self.authorized_author, HTTPStatus.OK),
 
             (f'/posts/{self.post.pk}/',
              self.guest_client, HTTPStatus.OK),
-            (f'/posts/{self.post.pk}/',
-             self.authorized_client, HTTPStatus.OK),
-            (f'/posts/{self.post.pk}/',
-             self.authorized_author, HTTPStatus.OK),
 
             ('/create/', self.guest_client, HTTPStatus.FOUND),
             ('/create/', self.authorized_client, HTTPStatus.OK),
-            ('/create/', self.authorized_author, HTTPStatus.OK),
 
             (f'/posts/{self.post.pk}/edit/',
              self.guest_client, HTTPStatus.FOUND),
@@ -88,3 +73,18 @@ class PostURLTests(TestCase):
             with self.subTest(url=url):
                 response = client.get(url)
                 self.assertEqual(response.status_code, status_code)
+
+    def test_urls_use_correct_templates(self):
+        """URL'ы используют корректные шаблоны."""
+        templates_pages_names = {
+            '': 'posts/index.html',
+            f'group/{self.group.slug}/': 'posts/group_list.html',
+            f'profile/{self.user.username}/': 'posts/profile.html',
+            f'posts/{self.post.pk}/': 'posts/post_detail.html',
+            'create/': 'posts/create_post.html',
+            f'posts/{self.post.pk}/edit/': 'posts/create_post.html',
+        }
+        for url, template in templates_pages_names.items():
+            with self.subTest(url=url):
+                response = self.authorized_author.get(url)
+                self.assertTemplateUsed(response, template)
