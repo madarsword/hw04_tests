@@ -77,12 +77,12 @@ class PostURLTests(TestCase):
     def test_urls_use_correct_templates(self):
         """URL'ы используют корректные шаблоны."""
         templates_pages_names = {
-            '': 'posts/index.html',
-            f'group/{self.group.slug}/': 'posts/group_list.html',
-            f'profile/{self.user.username}/': 'posts/profile.html',
-            f'posts/{self.post.pk}/': 'posts/post_detail.html',
-            'create/': 'posts/create_post.html',
-            f'posts/{self.post.pk}/edit/': 'posts/create_post.html',
+            '/': 'posts/index.html',
+            f'/group/{self.group.slug}/': 'posts/group_list.html',
+            f'/profile/{self.user.username}/': 'posts/profile.html',
+            f'/posts/{self.post.pk}/': 'posts/post_detail.html',
+            '/create/': 'posts/create_post.html',
+            f'/posts/{self.post.pk}/edit/': 'posts/create_post.html',
         }
         for url, template in templates_pages_names.items():
             with self.subTest(url=url):
