@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from django.conf import settings 
+from django.conf import settings
 
 from ..models import Group, Post
 
@@ -151,7 +151,9 @@ class PaginatorViewsTest(TestCase):
 
     def test_second_page_has_three_posts(self):
         """На второй странице с паджинатором верное количество постов."""
-        POSTS_ON_SECOND_PAGE = (self.AMOUNT_OF_TEST_POSTS - settings.POSTS_PER_PAGE)
+        POSTS_ON_SECOND_PAGE = (
+            self.AMOUNT_OF_TEST_POSTS - settings.POSTS_PER_PAGE
+        )
         for page_name, kwarg in self.page_names_records.items():
             with self.subTest(page_name=page_name):
                 response = self.client.get(reverse(
